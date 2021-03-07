@@ -19,6 +19,8 @@ public class MainActivity extends AppCompatActivity {
     public static final String EXTRA_MESSAGE = "com.example.qrtest.MESSAGE";
     boolean isAtCapacity = false;
     private String scanText;
+    private int buildingID;
+    private int userID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,18 +39,20 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        /** when a QR code has been scanned, do business logic to find out what building it is */
+        /** when a QR code has been scanned, store the buildingID that was scanned */
 
         IntentResult intentResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
 
         if(intentResult != null){
             if(intentResult.getContents() == null){
                 // error, could not scan code
+                scanText = "Could not read QR code. Please try again.";
             }
             else{
                 scanText = intentResult.getContents();
                 TextView textView = findViewById(R.id.textView);
                 textView.setText(scanText);
+                buildingID = Integer.parseInt(scanText);
                 verifyQR();
             }
         }
@@ -59,6 +63,39 @@ public class MainActivity extends AppCompatActivity {
 
     public void verifyQR(){
         /** Based on building id, go to confirmation activity */
+
+        // Create CheckInOut Model object
+        CheckInOutModel model = new CheckInOutModel();
+
+        // Convert buildingID to building name
+        String buildingName = model.queryQRToBuilding(buildingID);
+
+        // pop-up error if buildingID has no matches
+        if(buildingName == null){
+            TextView textView = findViewById(R.id.textView);
+            textView.setText("ERROR: INVALID QR");
+            return;
+        }
+
+        // verify if the user is not checked in
+        if(model.userIsCheckedIn(userID)){
+            TextView textView = findViewById(R.id.textView);
+            textView.setText("ERROR: ALREADY CHECKED IN");
+            return;
+        }
+
+        // check if building is full
+        if(model.queryBuildingIsFull(buildingID)){
+            Intent intent = new Intent(this, DisplayNoCapacity.class);
+            intent.putExtra(EXTRA_MESSAGE, buildingName);
+            startActivity(intent);
+        }
+        else{
+            // if building is not full, go to confirmation activity
+            Intent intent = new Intent(this, DisplayQRConfirmation.class);
+            intent.putExtra(EXTRA_MESSAGE, buildingName);
+            startActivity(intent);
+        }
 
         // if the building is full
         if(isAtCapacity){
