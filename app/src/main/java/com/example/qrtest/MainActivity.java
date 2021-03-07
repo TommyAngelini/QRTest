@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.TextView;
 
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -46,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
             }
             else{
                 scanText = intentResult.getContents();
+                TextView textView = findViewById(R.id.textView);
+                textView.setText(scanText);
+                verifyQR();
             }
         }
 
@@ -53,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void verifyQR(View view){
+    public void verifyQR(){
         /** Based on building id, go to confirmation activity */
 
         // if the building is full
@@ -67,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
             // after verifying QR and retrieving building ID, go to DisplayQRConfirmation activity
             Intent intent = new Intent(this, DisplayQRConfirmation.class);
             String message = "KAP";
-            intent.putExtra(EXTRA_MESSAGE, message);
+            intent.putExtra(EXTRA_MESSAGE, scanText);
             startActivity(intent);
         }
 
